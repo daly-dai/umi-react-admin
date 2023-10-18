@@ -1,0 +1,117 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  background: #2d7af7;
+  width: 100vw;
+
+  .header-split {
+    margin-left: 11px;
+    width: 1px;
+    height: 32px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .header-icon {
+    color: #fff;
+    margin-left: 24px;
+    font-size: 20px;
+  }
+
+  .header-bg-icon {
+    width: 32px;
+    height: 32px;
+    margin-left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    &-icon {
+      width: 20px;
+      height: 20px;
+      color: #fff;
+    }
+  }
+
+  .header-bg-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 60px;
+  }
+
+  .header-left {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 21px;
+
+    &-logo {
+      margin-left: 19px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 20px;
+
+      > img {
+        width: 48px;
+        height: 24px;
+        margin-right: 10px;
+      }
+    }
+
+    &-home {
+      width: 32px;
+      height: 32px;
+      margin-left: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+
+      &-icon {
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    &-home:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    padding-right: 24px;
+
+    .user-message {
+      display: flex;
+      align-items: center;
+      margin-left: 20px;
+      cursor: pointer;
+      padding: 4px;
+
+      > div {
+        font-size: 14px;
+        font-weight: 400;
+        color: #ffffff;
+        margin: 0 6px;
+        min-width: 42px;
+        max-width: 70px;
+        text-align: center;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .user-message:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+    }
+  }
+}
