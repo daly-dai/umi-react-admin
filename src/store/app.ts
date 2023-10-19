@@ -1,32 +1,27 @@
 import generateStore from '@/plugins/valtio-persister';
 interface appStoreType {
   token: string;
-  // rome-ignore lint/suspicious/noExplicitAny: <explanation>
-  asideMenu: any[];
-  // rome-ignore lint/suspicious/noExplicitAny: <explanation>
-  buttonMap: any;
+  userInfo: any;
 }
 
 const appStore = generateStore<appStoreType>({
   key: 'appStore',
   state: {
     token: '',
-    asideMenu: [],
-    buttonMap: {},
+    userInfo: {},
   },
   actions: {
     setToken: async (token: string, state) => {
       state['token'] = token;
     },
+    setUserInfo: (data, state) => {
+      state.userInfo = data;
+    },
   },
   persist: [
     {
-      key: 'dictData',
-      paths: ['dictData'],
-    },
-    {
       storage: localStorage,
-      paths: ['token'],
+      paths: ['token',"userInfo"],
     },
   ],
 });

@@ -55,12 +55,11 @@ const AsideMenu: React.FC<SideMenuProps> = ({ style }) => {
     const routerPath = routerKey || pathname;
     const stashList = cloneDeep(menuList);
 
-    const pathList = getNodePath(
-      stashList,
-      routerPath,
-      'key',
-      'children',
-    ) as string[];
+    const pathList = getNodePath({
+      tree: stashList,
+      key: routerPath,
+      nodeKey: 'key',
+    }) as string[];
 
     if (!pathList?.length) {
       setOpenKeys([]);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import appStore from '@/store/app';
 import { useSnapshot } from 'valtio';
-import { history, useLocation } from '@umijs/max';
+import { useLocation } from '@umijs/max';
 import { fuzzyQueryTree } from '@/utils/tree';
 import publicStore from '@/store/public';
 
@@ -27,7 +27,11 @@ const useAuth = () => {
       return true;
     }
 
-    const pathList = fuzzyQueryTree(authTree, pathname, 'key');
+    const pathList = fuzzyQueryTree({
+      tree: authTree,
+      value: pathname,
+      valueKey: 'key',
+    });
 
     if (!pathList?.length) return false;
 
@@ -40,7 +44,6 @@ const useAuth = () => {
     // 用户权限中心未登录
     if (!token) {
       setAuth(false);
-      history.push('/login');
       return;
     }
 

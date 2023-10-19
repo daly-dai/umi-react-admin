@@ -1,30 +1,58 @@
-import { cloneDeep, isArray } from 'lodash-es';
+import { isArray, omit } from 'lodash-es';
 
 interface TreeNode {
   [key: string | number]: unknown | TreeNode[];
 }
+
+export type getTreeMapProps = {
+  tree: any[];
+  children?: string;
+  hasChild?: boolean;
+};
 
 /**
  * @description 将树平铺为数组
  * @param { object } tree 数据
  * @param { String } children 树形结构关联的属性
  */
-
-function getTreeMap(tree: any[], children = 'children'): any[] {
+function getTreeMap({
+  tree,
+  children = 'children',
+  hasChild = true,
+}: getTreeMapProps): any[] {
   if (!Array.isArray(tree)) return [];
 
   let result: any[] = [];
 
   for (let i = 0; i < tree.length; i++) {
-    const node = tree[i];
-    result.push(node);
+    let node = tree[i];
+
+    let localNode = node;
+
+    if (!hasChild) {
+      localNode = omit({ ...localNode }, [children]);
+    }
+
+    result.push(localNode);
 
     if (node[children] && node[children].length) {
-      result = result.concat(getTreeMap(node[children], children));
+      result = result.concat(
+        getTreeMap({
+          tree: node[children],
+          children: children,
+        }),
+      );
     }
   }
 
   return result;
+}
+
+interface ArrayToTreeProps {
+  tree: any[];
+  nodeKey?: string;
+  parentKey?: string;
+  children?: string;
 }
 
 /**
@@ -35,22 +63,22 @@ function getTreeMap(tree: any[], children = 'children'): any[] {
  * @param {*} children 子节点属性
  * @returns
  */
-function arrayToTree<T>(
-  arr: T,
+function arrayToTree({
+  tree,
   nodeKey = 'id',
   parentKey = 'parentId',
   children = 'children',
-) {
-  const result: TreeNode[] = [];
+}: ArrayToTreeProps) {
+  const result: any[] = [];
 
-  if (!Array.isArray(arr) || arr.length === 0) {
+  if (!Array.isArray(tree) || tree.length === 0) {
     return result;
   }
 
   const map: { [key: string | number]: TreeNode } = {};
 
-  arr.forEach((item) => (map[item[nodeKey] as string | number] = item));
-  arr.forEach((item) => {
+  tree.forEach((item) => (map[item[nodeKey] as string | number] = item));
+  tree.forEach((item) => {
     const parent = map[item[parentKey] as string | number];
 
     if (parent) {
@@ -63,6 +91,13 @@ function arrayToTree<T>(
   return result;
 }
 
+export interface GetNodePathProps {
+  tree: any[];
+  key: string | number;
+  nodeKey?: string;
+  children?: string;
+  resultKey?: string;
+}
 /**
  * @description 查找节点在树中的路径
  * @param {*} tree 树的数据
@@ -71,15 +106,13 @@ function arrayToTree<T>(
  * @param {*} children 子节点标识
  * @returns
  */
-const getNodePath = (
-  tree: any[],
-  id: string | number,
+const getNodePath = ({
+  tree,
+  key,
   nodeKey = 'id',
   children = 'children',
-): (string | number)[] => {
-  if (!Array.isArray(tree) || tree.length === 0) {
-    return [];
-  }
+}: GetNodePathProps): any[] => {
+  if (!Array.isArray(tree) || tree.length === 0) return [];
 
   const path: (string | number)[] = [];
 
@@ -111,8 +144,15 @@ const getNodePath = (
     return [];
   };
 
-  return treeFindPath(tree, id, path);
+  return treeFindPath(tree, key, path);
 };
+
+export interface FuzzyQueryTreeProps {
+  tree: any[];
+  value: any;
+  valueKey: string;
+  children?: string;
+}
 
 /**
  * @description 模糊匹配树
@@ -122,49 +162,43 @@ const getNodePath = (
  * @param {*} children 子节点属性
  * @returns
  */
-const fuzzyQueryTree = (
-  arr: TreeNode[],
-  value: unknown,
-  nameKey = 'name',
+const fuzzyQueryTree = ({
+  tree,
+  value,
+  valueKey = 'name',
   children = 'children',
-): any[] => {
-  if (!Array.isArray(arr) || arr.length === 0) {
-    return [];
-  }
+}: FuzzyQueryTreeProps): any[] => {
+  let newArr: any[] = [];
 
-  const result: TreeNode[] = [];
-
-  arr.forEach((item) => {
-    if ((item[nameKey] as string).indexOf(value as string) > -1) {
-      const childrenNode = fuzzyQueryTree(
-        item[children] as TreeNode[],
-        value,
-        nameKey,
-        children,
-      );
-      const obj = { ...item, childrenNode };
-      result.push(obj);
+  tree.forEach((element) => {
+    if (element[valueKey]?.indexOf(value) > -1) {
+      newArr.push(element);
       return;
     }
 
-    if ((item[children] as TreeNode[]).length > 0) {
-      const childrenNode = fuzzyQueryTree(
-        item[children] as TreeNode[],
+    if (element[children] && element[children]?.length > 0) {
+      const reqData = fuzzyQueryTree({
+        tree: element[children],
         value,
-        nameKey,
+        valueKey,
         children,
-      );
-      const obj = { ...item, childrenNode };
+      });
 
-      if (childrenNode && childrenNode.length > 0) {
-        result.push(obj);
+      if (reqData && reqData.length > 0) {
+        newArr = newArr.concat([...reqData]);
       }
     }
   });
 
-  return result;
+  return newArr;
 };
 
+export interface ExactMatchTreeProps {
+  tree: any;
+  value: any;
+  valueKey: string;
+  children?: string;
+}
 /**
  * @description 精确匹配树
  * @param {*} tree 树数据
@@ -172,24 +206,26 @@ const fuzzyQueryTree = (
  * @param {*} nameKey 查询的属性
  * @param {*} children 子节点属性
  */
-function exactMatchTree<T>(
-  tree: T,
-  func: (node: TreeNode) => boolean,
+function exactMatchTree({
+  tree,
+  value,
+  valueKey = 'name',
   children = 'children',
-): TreeNode | null {
+}: ExactMatchTreeProps): TreeNode | null {
   if (!Array.isArray(tree) || tree.length === 0) {
     return null;
   }
 
   for (const data of tree) {
-    if (func(data)) return data;
+    if (data[valueKey] === value) return data;
 
     if (data[children]) {
-      const result = exactMatchTree(
-        data[children] as TreeNode[],
-        func,
+      const result = exactMatchTree({
+        tree: data[children],
+        value,
+        valueKey,
         children,
-      );
+      });
 
       if (result) return result;
     }
@@ -198,6 +234,11 @@ function exactMatchTree<T>(
   return null;
 }
 
+export interface TraverseTreeNodesProps {
+  tree: any[];
+  callback: (node: any) => void;
+  children?: string;
+}
 /**
  * @description 对树节点的属性进行操作
  * @param {Array} tree 树节点数据
@@ -205,21 +246,31 @@ function exactMatchTree<T>(
  * @param { string } children 子节点
  * @returns
  */
-const operationAttrToNodes = (
-  tree: any[],
-  callback: (node: TreeNode) => void,
+const traverseTreeNodes = ({
+  tree,
+  callback,
   children = 'children',
-) => {
-  tree.forEach((item: TreeNode) => {
+}: TraverseTreeNodesProps) => {
+  tree.forEach((item) => {
     callback(item);
 
-    if ((item[children] as TreeNode[])?.length > 0) {
-      operationAttrToNodes(item[children] as TreeNode[], callback, children);
+    if (item[children] && item[children]?.length > 0) {
+      traverseTreeNodes({
+        tree: item[children],
+        callback,
+        children,
+      });
     }
   });
 
   return tree;
 };
+
+export interface FilterTreeProps {
+  tree: any;
+  filterFn: (node: any) => boolean;
+  children?: string;
+}
 
 /**
  * @description 筛选树并返回新树
@@ -228,21 +279,24 @@ const operationAttrToNodes = (
  * @param children
  * @returns
  */
-export function filterTree<T>(
-  tree: T[],
-  filterFn: (node: T) => boolean,
+export function filterTree<T>({
+  tree,
+  filterFn,
   children = 'children',
-) {
+}: FilterTreeProps) {
   let stashTree = tree;
+
   if (!tree) return null;
 
-  // eslint-disable-next-line no-param-reassign
   if (!isArray(tree)) stashTree = [tree];
 
-  return stashTree.reduce((acc: T[], node) => {
+  return stashTree.reduce((acc: T[], node: any) => {
     const newNode = { ...node };
 
-    const childrenList = filterTree((newNode as any)[children] || [], filterFn);
+    const childrenList = filterTree({
+      tree: (newNode as any)[children] || [],
+      filterFn,
+    });
 
     if (filterFn(newNode) || childrenList?.length) {
       (newNode as any)[children] = childrenList;
@@ -254,60 +308,6 @@ export function filterTree<T>(
   }, []);
 }
 
-interface ModifyTreeKeysProps {
-  tree: any;
-  keyMap: Record<string, string>;
-  modifier: (node: any) => void;
-  skipKeys?: string[];
-}
-/**
- * @description  自定义树形结构的相关属性
- * @param obj
- * @param keyMap
- * @returns
- */
-export function modifyTreeKeys({
-  tree,
-  keyMap,
-  modifier,
-  skipKeys,
-}: ModifyTreeKeysProps): any {
-  if (!tree || typeof tree !== 'object') return tree;
-
-  const newObj: any = {};
-
-  // eslint-disable-next-line guard-for-in
-  for (let key in tree) {
-    if (skipKeys && skipKeys.includes(key)) {
-      newObj[key] = tree[key];
-      continue;
-    }
-
-    if (key in keyMap) {
-      newObj[keyMap[key]] = modifyTreeKeys({
-        tree: tree[key],
-        keyMap,
-        modifier,
-        skipKeys,
-      });
-      continue;
-    }
-
-    newObj[key] = modifyTreeKeys({
-      tree: tree[key],
-      keyMap,
-      modifier,
-      skipKeys,
-    });
-  }
-
-  if (modifier) {
-    modifier(newObj);
-  }
-
-  return newObj;
-}
-
 /**
  * @description 递归遍历树
  * @param {Array} tree 树节点数据
@@ -316,15 +316,15 @@ export function modifyTreeKeys({
  * @returns
  */
 const traversalTree = (
-  tree: TreeNode[],
-  callback: (node: TreeNode) => boolean,
+  tree: any[],
+  callback: (node: any) => boolean,
   children = 'children',
 ) => {
-  tree.forEach((item: TreeNode) => {
+  tree.forEach((item: any) => {
     callback(item);
 
-    if ((item[children] as TreeNode[])?.length > 0) {
-      operationAttrToNodes(item[children] as TreeNode[], callback, children);
+    if (item[children]?.length > 0) {
+      traverseTreeNodes({ tree: item[children], callback, children });
     }
   });
 
@@ -337,15 +337,15 @@ const traversalTree = (
  * @param {*} children children = children
  * @returns
  */
-function removeEmptyChildren<T>(tree: T[], children = 'children'): T[] {
+function removeEmptyTreeNode(tree: any, children = 'children') {
   tree.forEach((item: any) => {
-    if ((item[children] as TreeNode[])?.length === 0) {
+    if (item[children]?.length === 0 || !item[children]?.length) {
       delete item[children];
       return;
     }
 
-    if ((item[children] as TreeNode[]).length > 0) {
-      removeEmptyChildren(item[children] as TreeNode[]);
+    if ((item[children] as TreeNode[])?.length > 0) {
+      removeEmptyTreeNode(item[children] as any[], children);
     }
   });
 
@@ -358,7 +358,7 @@ function removeEmptyChildren<T>(tree: T[], children = 'children'): T[] {
  * @param {*} children
  * @returns
  */
-const getAllLeaf = (tree: TreeNode[], children = 'children') => {
+const getTreeLeaf = (tree: TreeNode[], children = 'children') => {
   if (!Array.isArray(tree) || tree.length === 0) {
     return [];
   }
@@ -366,12 +366,12 @@ const getAllLeaf = (tree: TreeNode[], children = 'children') => {
   const result: TreeNode[] = [];
   const getLeaf = (tree: TreeNode[]) => {
     tree.forEach((item: TreeNode) => {
-      if ((item[children] as TreeNode[]).length === 0) {
+      if (!(item[children] as TreeNode[])?.length) {
         result.push(item);
         return;
       }
 
-      if ((item[children] as TreeNode[]).length > 0) {
+      if ((item[children] as TreeNode[])?.length > 0) {
         getLeaf(item[children] as TreeNode[]);
       }
     });
@@ -381,70 +381,14 @@ const getAllLeaf = (tree: TreeNode[], children = 'children') => {
   return result;
 };
 
-interface DfsFilterTree {
-  tree: TreeNode[];
-  ope?: (node: TreeNode, depth?: number) => void | null;
-  filter: (node: TreeNode) => boolean;
-  defaultChildren?: string;
-  editChildren?: string;
-}
-
-/**
- * @description 筛选过滤树
- * @param { Array } tree 树
- * @param { Function } ope 对属性进行操作
- * @param { Function } filter 筛选函数
- * @param { String } defaultChildren 默认的遍历key
- * @param { string } editChildren 修改之后的便利key
- * @returns
- */
-const dfsFilterTree = ({
-  tree,
-  ope,
-  filter,
-  defaultChildren = 'children',
-  editChildren = 'children',
-}: DfsFilterTree) => {
-  if (!tree?.length) return [];
-
-  const childrenKey = editChildren || defaultChildren;
-
-  const walkAndCopy = (treeNode: TreeNode, depth = 1) => {
-    if (filter(treeNode)) {
-      const copy = (
-        ope ? cloneDeep(ope(treeNode, depth)) : cloneDeep(treeNode)
-      ) as TreeNode;
-
-      if (treeNode[defaultChildren]) {
-        copy[defaultChildren] = null;
-
-        copy[childrenKey] = (treeNode[defaultChildren] as TreeNode[])
-          .map((node: TreeNode) => walkAndCopy(node, depth + 1))
-          .filter((subTree) => (subTree as unknown as TreeNode[])?.length > 0);
-      }
-
-      return copy;
-    }
-  };
-
-  return tree
-    .map((treeNode: TreeNode) => walkAndCopy(treeNode))
-    .filter(
-      (node) =>
-        node &&
-        ((node[childrenKey] as unknown as TreeNode[])?.length || filter(node)),
-    );
-};
-
 export {
   getTreeMap,
   getNodePath,
   fuzzyQueryTree,
-  operationAttrToNodes,
-  removeEmptyChildren,
-  getAllLeaf,
+  traverseTreeNodes,
+  removeEmptyTreeNode,
+  getTreeLeaf,
   arrayToTree,
-  dfsFilterTree,
   traversalTree,
   exactMatchTree,
 };

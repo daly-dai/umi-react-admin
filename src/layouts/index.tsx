@@ -1,9 +1,9 @@
-import { Outlet } from '@umijs/max';
+import { Outlet, history } from '@umijs/max';
 import { ReactElement } from 'react';
 
 import './index.less';
 import useAuth from '@/hooks/useAuth';
-import NoFoundPage from '@/pages/404';
+
 import HeadAsideLayout from './layout/head-aside-layout';
 import AsideLayout from './layout/aside-layout';
 import HeadLayout from './layout/head-layout';
@@ -16,7 +16,8 @@ const Layouts = () => {
   const { metaState } = useRouterMeta();
 
   if (!auth) {
-    return <NoFoundPage />;
+    history.push('/login');
+    return;
   }
 
   const renderLayout = () => {

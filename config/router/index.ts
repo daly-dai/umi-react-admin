@@ -15,7 +15,7 @@ const routes = [
         path: '/',
         redirect: '/home',
         meta: {
-          layout: 'headFooterLayout',
+          layout: 'headAsideLayout',
         },
       },
       {
@@ -23,7 +23,7 @@ const routes = [
         path: '/home',
         component: './home-page',
         meta: {
-          layout: 'headFooterLayout',
+          layout: 'headAsideLayout',
         },
       },
       {

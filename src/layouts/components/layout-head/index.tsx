@@ -6,7 +6,6 @@ import { useMemo } from 'react';
 import { logo, user, homeLogo } from '@/assets/images';
 import styles from './index.less';
 import appStore from '@/store/app';
-import HeaderMenu from '../header-menu';
 
 const LayoutHeader = () => {
   const appState = useSnapshot(appStore.state);
@@ -41,8 +40,6 @@ const LayoutHeader = () => {
             />
           </div>
         )}
-
-        <HeaderMenu />
       </div>
 
       <div className={styles['header-right']}>

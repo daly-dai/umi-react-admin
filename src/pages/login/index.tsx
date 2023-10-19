@@ -1,24 +1,49 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './index.less';
 import { xwc as userSvg } from '@/assets/images';
-import { Button, Form, Input } from 'antd';
-import { USER_INFO } from '@/constants';
+import { Button, Form, Input, message } from 'antd';
+import { USER_ACCOUNT } from '@/constants';
+import { createCode } from '@/utils/tools';
+import appStore from '@/store/app';
+import { history } from '@umijs/max';
 
 interface LoginProps {
-  userName: string;
+  account: string;
   password: string;
 }
 const Login: React.FC = () => {
   const [form] = Form.useForm();
 
-  const handleLogin = async(data:LoginProps) => {
+  /**
+   * 登录逻辑处理
+   * @param data
+   * @returns
+   */
+  const handleLogin = async (data: LoginProps) => {
     await form.validateFields();
 
-    if(data === USER_INFO) {
-      
+    if (data.password !== USER_ACCOUNT.password) {
+      message.error('请输入正确的密码');
+      return;
     }
 
+    appStore.setToken(createCode(24));
+
+    appStore.setUserInfo({
+      userName: 'admin',
+    });
+
+    message.success('登录成功');
+
+    history.push('/home');
   };
+
+  useEffect(() => {
+    form.setFieldsValue({
+      account: 'admin',
+      password: 'admin',
+    });
+  }, []);
 
   const renderLoginForm = () => {
     return (
@@ -30,8 +55,8 @@ const Login: React.FC = () => {
       >
         <Form.Item
           rules={[{ required: true, message: '请输入用户名' }]}
-          label="用户名"
-          name="userName"
+          label="账号"
+          name="account"
         >
           <Input />
         </Form.Item>
@@ -50,7 +75,7 @@ const Login: React.FC = () => {
             htmlType="submit"
             size="large"
           >
-            提交
+            登录
           </Button>
         </Form.Item>
       </Form>
