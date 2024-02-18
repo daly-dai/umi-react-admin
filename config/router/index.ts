@@ -21,7 +21,7 @@ const routes = [
       {
         title: '首页',
         path: '/home',
-        component: './home-page',
+        component: './home',
         meta: {
           layout: 'headAsideLayout',
         },
@@ -42,10 +42,16 @@ const routes = [
           layout: 'headLayout',
         },
       },
+      {
+        title: '卡片动画页面',
+        path: '/transform-card',
+        component: './transform-card',
+        meta: {
+          layout: 'headLayout',
+        },
+      },
     ],
   },
 ];
-
-
 
 export default routes;

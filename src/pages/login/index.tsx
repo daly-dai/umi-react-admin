@@ -1,11 +1,12 @@
+import { xwc as userSvg } from '@/assets/images';
+import SvgIcon from '@/components/SvgIcon';
+import { USER_ACCOUNT } from '@/constants';
+import appStore from '@/store/app';
+import { createCode } from '@/utils/tools';
+import { history } from '@umijs/max';
+import { Button, Form, Input, message } from 'antd';
 import React, { useEffect } from 'react';
 import './index.less';
-import { xwc as userSvg } from '@/assets/images';
-import { Button, Form, Input, message } from 'antd';
-import { USER_ACCOUNT } from '@/constants';
-import { createCode } from '@/utils/tools';
-import appStore from '@/store/app';
-import { history } from '@umijs/max';
 
 interface LoginProps {
   account: string;
@@ -84,6 +85,9 @@ const Login: React.FC = () => {
 
   return (
     <div className="login">
+      <div className="login-bg">
+        <SvgIcon name="bg" className="cl-svg"></SvgIcon>
+      </div>
       <div className="login-center">
         <div className="login-center-left">
           <img src={userSvg}></img>
